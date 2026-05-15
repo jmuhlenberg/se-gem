@@ -14,9 +14,17 @@
     OOTB collection widget will mount inside the slot below
     (typical use: "Subscribe & Save" badge or inline picker on
     each product card).
+
+    On the homepage Featured Collection, we render the GEM demo
+    subscription widget in place of the empty slot so reviewers can
+    see the planned subscribe-and-save experience inline on cards.
     ============================================================
   {%- endcomment -%}
-  <div class="recharge-widget-slot recharge-widget-slot--card" data-recharge-collection-card data-product-id="{{ product.id }}"></div>
+  {%- if template.name == 'index' and product != blank -%}
+    {% render 'subscription-widget', product: product %}
+  {%- else -%}
+    <div class="recharge-widget-slot recharge-widget-slot--card" data-recharge-collection-card data-product-id="{{ product.id }}"></div>
+  {%- endif -%}
 {% endcapture %}
 
 {% render 'product-card', children: children, product: product %}

@@ -1,0 +1,325 @@
+<!-- GEM DEMO: Subscription widget placeholder. Replace with Recharge OOTB widget on go-live. -->
+{%- doc -%}
+  Inline subscription widget for product cards on the Featured Collection
+  section of the homepage. Pure visual placeholder — no Recharge API calls.
+  Pricing math uses a fixed 28% subscriber discount applied to the product's
+  first variant price.
+
+  @param {object} product - The product object (required)
+{%- enddoc -%}
+
+{%- liquid
+  assign discount_pct = 28
+  assign one_time_price = product.price | default: 0
+  assign sub_price = one_time_price | times: 72 | divided_by: 100
+  assign widget_id = 'gem-sub-widget-' | append: product.id | append: '-' | append: section.id
+-%}
+
+<div
+  class="gem-sub-widget"
+  data-gem-sub-widget
+  id="{{ widget_id }}"
+  data-product-id="{{ product.id }}"
+>
+  <div class="gem-sub-widget__toggle" role="tablist" aria-label="Purchase type">
+    <button
+      type="button"
+      class="gem-sub-widget__toggle-btn"
+      data-purchase-type="onetime"
+      role="tab"
+      aria-selected="false"
+    >
+      <span class="gem-sub-widget__toggle-label">One-Time Purchase</span>
+    </button>
+    <button
+      type="button"
+      class="gem-sub-widget__toggle-btn is-active"
+      data-purchase-type="subscription"
+      role="tab"
+      aria-selected="true"
+    >
+      <span class="gem-sub-widget__toggle-label">Subscribe &amp; Save {{ discount_pct }}%</span>
+    </button>
+  </div>
+
+  <div class="gem-sub-widget__frequency" data-frequency-group aria-label="Delivery frequency">
+    <button
+      type="button"
+      class="gem-sub-widget__freq-btn is-active"
+      data-frequency="4w"
+      aria-pressed="true"
+    >
+      Every 4 Weeks
+    </button>
+    <button
+      type="button"
+      class="gem-sub-widget__freq-btn"
+      data-frequency="12w"
+      aria-pressed="false"
+    >
+      Every 12 Weeks
+    </button>
+  </div>
+
+  <div class="gem-sub-widget__pricing" data-pricing data-mode="subscription">
+    <span class="gem-sub-widget__sub-info">
+      <strong class="gem-sub-widget__save-pct">Save {{ discount_pct }}%</strong>
+      <span class="gem-sub-widget__price-compare">
+        <span class="gem-sub-widget__sub-price">{{ sub_price | money }}</span>
+        <span class="gem-sub-widget__vs">vs</span>
+        <s class="gem-sub-widget__list-price">{{ one_time_price | money }}</s>
+      </span>
+    </span>
+    <span class="gem-sub-widget__onetime-info">
+      <span class="gem-sub-widget__onetime-price">{{ one_time_price | money }}</span>
+    </span>
+  </div>
+</div>
+
+{% stylesheet %}
+  .gem-sub-widget {
+    --gem-cream: #FFFEF0;
+    --gem-espresso: #301D01;
+    --gem-espresso-deep: #1A0F00;
+    --gem-lime: #EFFFC2;
+    --gem-lime-deep: #DFF5A5;
+    --gem-sand: #F5EFD9;
+    --gem-border: rgba(48, 29, 1, 0.18);
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--gem-border);
+    border-radius: 12px;
+    background-color: var(--gem-cream);
+    color: var(--gem-espresso);
+    font-family: var(--font-body--family, inherit);
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .gem-sub-widget__toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 3px;
+    background-color: var(--gem-sand);
+    border-radius: 999px;
+  }
+
+  .gem-sub-widget__toggle-btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--gem-espresso);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 7px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    text-align: center;
+    min-width: 0;
+  }
+
+  .gem-sub-widget__toggle-btn:hover {
+    background-color: rgba(48, 29, 1, 0.06);
+  }
+
+  .gem-sub-widget__toggle-btn.is-active {
+    background-color: var(--gem-espresso);
+    color: var(--gem-lime);
+    box-shadow: 0 1px 2px rgba(48, 29, 1, 0.12);
+  }
+
+  .gem-sub-widget__toggle-btn.is-active:hover {
+    background-color: var(--gem-espresso-deep);
+  }
+
+  .gem-sub-widget__toggle-label {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gem-sub-widget__frequency {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .gem-sub-widget__frequency[hidden] {
+    display: none;
+  }
+
+  .gem-sub-widget__freq-btn {
+    appearance: none;
+    background-color: transparent;
+    color: var(--gem-espresso);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 8px 6px;
+    border: 1px solid var(--gem-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+    text-align: center;
+  }
+
+  .gem-sub-widget__freq-btn:hover {
+    background-color: var(--gem-sand);
+  }
+
+  .gem-sub-widget__freq-btn.is-active {
+    background-color: var(--gem-lime);
+    border-color: var(--gem-espresso);
+    color: var(--gem-espresso);
+  }
+
+  .gem-sub-widget__pricing {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 2px 2px;
+    min-height: 22px;
+  }
+
+  .gem-sub-widget__pricing[data-mode="subscription"] .gem-sub-widget__onetime-info {
+    display: none;
+  }
+
+  .gem-sub-widget__pricing[data-mode="onetime"] .gem-sub-widget__sub-info {
+    display: none;
+  }
+
+  .gem-sub-widget__sub-info {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .gem-sub-widget__save-pct {
+    display: inline-block;
+    background-color: var(--gem-lime);
+    color: var(--gem-espresso);
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+
+  .gem-sub-widget__price-compare {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gem-espresso);
+  }
+
+  .gem-sub-widget__sub-price {
+    font-weight: 700;
+  }
+
+  .gem-sub-widget__vs {
+    opacity: 0.7;
+    margin: 0 2px;
+  }
+
+  .gem-sub-widget__list-price {
+    opacity: 0.55;
+  }
+
+  .gem-sub-widget__onetime-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gem-espresso);
+  }
+
+  @media (max-width: 540px) {
+    .gem-sub-widget {
+      padding: 8px;
+      gap: 6px;
+    }
+    .gem-sub-widget__toggle-btn { font-size: 11px; padding: 6px; }
+    .gem-sub-widget__freq-btn { font-size: 10px; padding: 7px 4px; }
+    .gem-sub-widget__save-pct { font-size: 10px; padding: 2px 6px; }
+    .gem-sub-widget__price-compare,
+    .gem-sub-widget__onetime-price { font-size: 11px; }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    if (window.__gemSubWidgetInit) return;
+    window.__gemSubWidgetInit = true;
+
+    function initWidget(root) {
+      if (root.dataset.gemReady === '1') return;
+      root.dataset.gemReady = '1';
+
+      var toggleBtns = root.querySelectorAll('[data-purchase-type]');
+      var freqGroup = root.querySelector('[data-frequency-group]');
+      var pricing = root.querySelector('[data-pricing]');
+      var freqBtns = root.querySelectorAll('[data-frequency]');
+
+      function setMode(mode) {
+        toggleBtns.forEach(function (btn) {
+          var active = btn.dataset.purchaseType === mode;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        if (mode === 'subscription') {
+          freqGroup.hidden = false;
+          pricing.dataset.mode = 'subscription';
+        } else {
+          freqGroup.hidden = true;
+          pricing.dataset.mode = 'onetime';
+        }
+      }
+
+      toggleBtns.forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          setMode(btn.dataset.purchaseType);
+        });
+      });
+
+      freqBtns.forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          freqBtns.forEach(function (b) {
+            var active = b === btn;
+            b.classList.toggle('is-active', active);
+            b.setAttribute('aria-pressed', active ? 'true' : 'false');
+          });
+        });
+      });
+    }
+
+    function initAll(scope) {
+      var root = scope || document;
+      var widgets = root.querySelectorAll('[data-gem-sub-widget]');
+      widgets.forEach(initWidget);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { initAll(); });
+    } else {
+      initAll();
+    }
+
+    document.addEventListener('shopify:section:load', function (e) { initAll(e.target); });
+    document.addEventListener('shopify:block:select', function (e) { initAll(e.target); });
+  })();
+</script>
