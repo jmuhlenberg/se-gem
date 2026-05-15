@@ -1,9 +1,18 @@
 <!-- GEM DEMO: Subscription widget placeholder. Replace with Recharge OOTB widget on go-live. -->
 {%- doc -%}
   Inline subscription widget for product cards on the Featured Collection
-  section of the homepage. Pure visual placeholder — no Recharge API calls.
-  Pricing math uses a fixed 28% subscriber discount applied to the product's
-  first variant price.
+  section of the homepage. Visual placeholder — does not call Recharge's
+  API. Pricing math uses a fixed 28% subscriber discount applied to the
+  product's first variant price.
+
+  Selling plan IDs are sourced from product.selling_plan_groups when
+  available (matches WEEK/MONTH cadences to the 4w/12w buttons); falls
+  back to the first two plans if cadence matching fails. With no selling
+  plans configured, Subscribe & Save adds the variant as a regular line
+  item (no plan attached).
+
+  Add-to-cart uses AJAX (/cart/add.js) and dispatches the Horizon
+  CartUpdateEvent so the cart drawer refreshes without a page redirect.
 
   @param {object} product - The product object (required)
 {%- enddoc -%}
@@ -12,7 +21,35 @@
   assign discount_pct = 28
   assign one_time_price = product.price | default: 0
   assign sub_price = one_time_price | times: 72 | divided_by: 100
+
+  assign variant_id = product.selected_or_first_available_variant.id
   assign widget_id = 'gem-sub-widget-' | append: product.id | append: '-' | append: section.id
+
+  assign plan_4w_id = ''
+  assign plan_12w_id = ''
+
+  for group in product.selling_plan_groups
+    for plan in group.selling_plans
+      assign interval = plan.delivery_policy.interval | default: ''
+      assign count = plan.delivery_policy.interval_count | default: 0
+      if interval == 'WEEK' and count == 4 and plan_4w_id == ''
+        assign plan_4w_id = plan.id
+      elsif interval == 'WEEK' and count == 12 and plan_12w_id == ''
+        assign plan_12w_id = plan.id
+      elsif interval == 'MONTH' and count == 1 and plan_4w_id == ''
+        assign plan_4w_id = plan.id
+      elsif interval == 'MONTH' and count == 3 and plan_12w_id == ''
+        assign plan_12w_id = plan.id
+      endif
+    endfor
+  endfor
+
+  if plan_4w_id == '' and product.selling_plan_groups.first.selling_plans.size > 0
+    assign plan_4w_id = product.selling_plan_groups.first.selling_plans[0].id
+  endif
+  if plan_12w_id == '' and product.selling_plan_groups.first.selling_plans.size > 1
+    assign plan_12w_id = product.selling_plan_groups.first.selling_plans[1].id
+  endif
 -%}
 
 <div
@@ -20,6 +57,9 @@
   data-gem-sub-widget
   id="{{ widget_id }}"
   data-product-id="{{ product.id }}"
+  data-variant-id="{{ variant_id }}"
+  data-plan-4w="{{ plan_4w_id }}"
+  data-plan-12w="{{ plan_12w_id }}"
 >
   <div class="gem-sub-widget__toggle" role="tablist" aria-label="Purchase type">
     <button
@@ -74,6 +114,46 @@
       <span class="gem-sub-widget__onetime-price">{{ one_time_price | money }}</span>
     </span>
   </div>
+
+  <div class="gem-sub-widget__actions">
+    <div class="gem-sub-widget__qty" role="group" aria-label="Quantity">
+      <button
+        type="button"
+        class="gem-sub-widget__qty-btn"
+        data-qty-step="-1"
+        aria-label="Decrease quantity"
+      >&minus;</button>
+      <input
+        type="number"
+        class="gem-sub-widget__qty-input"
+        data-qty-input
+        value="1"
+        min="1"
+        max="99"
+        step="1"
+        inputmode="numeric"
+        aria-label="Quantity"
+      >
+      <button
+        type="button"
+        class="gem-sub-widget__qty-btn"
+        data-qty-step="1"
+        aria-label="Increase quantity"
+      >+</button>
+    </div>
+
+    <button
+      type="button"
+      class="gem-sub-widget__atc"
+      data-add-to-cart
+    >
+      <span class="gem-sub-widget__atc-default">Add to Cart</span>
+      <span class="gem-sub-widget__atc-loading" aria-hidden="true">Adding&hellip;</span>
+      <span class="gem-sub-widget__atc-success" aria-hidden="true">Added &check;</span>
+    </button>
+  </div>
+
+  <div class="gem-sub-widget__error" data-error hidden role="alert"></div>
 </div>
 
 {% stylesheet %}
@@ -85,6 +165,7 @@
     --gem-lime-deep: #DFF5A5;
     --gem-sand: #F5EFD9;
     --gem-border: rgba(48, 29, 1, 0.18);
+    --gem-error: #b3261e;
 
     display: flex;
     flex-direction: column;
@@ -192,13 +273,8 @@
     min-height: 22px;
   }
 
-  .gem-sub-widget__pricing[data-mode="subscription"] .gem-sub-widget__onetime-info {
-    display: none;
-  }
-
-  .gem-sub-widget__pricing[data-mode="onetime"] .gem-sub-widget__sub-info {
-    display: none;
-  }
+  .gem-sub-widget__pricing[data-mode="subscription"] .gem-sub-widget__onetime-info { display: none; }
+  .gem-sub-widget__pricing[data-mode="onetime"] .gem-sub-widget__sub-info { display: none; }
 
   .gem-sub-widget__sub-info {
     display: inline-flex;
@@ -219,41 +295,122 @@
     letter-spacing: 0.02em;
   }
 
-  .gem-sub-widget__price-compare {
-    font-size: 12px;
-    font-weight: 500;
+  .gem-sub-widget__price-compare { font-size: 12px; font-weight: 500; }
+  .gem-sub-widget__sub-price { font-weight: 700; }
+  .gem-sub-widget__vs { opacity: 0.7; margin: 0 2px; }
+  .gem-sub-widget__list-price { opacity: 0.55; }
+  .gem-sub-widget__onetime-price { font-size: 12px; font-weight: 700; }
+
+  .gem-sub-widget__actions {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .gem-sub-widget__qty {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--gem-border);
+    border-radius: 10px;
+    background-color: #fff;
+    overflow: hidden;
+    height: 36px;
+  }
+
+  .gem-sub-widget__qty-btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--gem-espresso);
+    width: 28px;
+    height: 100%;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+    padding: 0;
+  }
+
+  .gem-sub-widget__qty-btn:hover { background-color: var(--gem-sand); }
+  .gem-sub-widget__qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .gem-sub-widget__qty-input {
+    appearance: textfield;
+    -moz-appearance: textfield;
+    width: 36px;
+    height: 100%;
+    text-align: center;
+    border: 0;
+    border-left: 1px solid var(--gem-border);
+    border-right: 1px solid var(--gem-border);
+    background: transparent;
+    color: var(--gem-espresso);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+  }
+
+  .gem-sub-widget__qty-input::-webkit-outer-spin-button,
+  .gem-sub-widget__qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .gem-sub-widget__qty-input:focus { outline: 2px solid var(--gem-espresso); outline-offset: -2px; }
+
+  .gem-sub-widget__atc {
+    appearance: none;
+    border: 0;
+    background-color: var(--gem-espresso);
+    color: var(--gem-lime);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 0 12px;
+    height: 36px;
+    transition: background-color 180ms ease, transform 120ms ease;
+    position: relative;
+  }
+
+  .gem-sub-widget__atc:hover { background-color: var(--gem-espresso-deep); }
+  .gem-sub-widget__atc:active { transform: scale(0.98); }
+  .gem-sub-widget__atc:disabled { cursor: wait; opacity: 0.85; }
+
+  .gem-sub-widget__atc .gem-sub-widget__atc-loading,
+  .gem-sub-widget__atc .gem-sub-widget__atc-success { display: none; }
+
+  .gem-sub-widget__atc[data-state="loading"] .gem-sub-widget__atc-default { display: none; }
+  .gem-sub-widget__atc[data-state="loading"] .gem-sub-widget__atc-loading { display: inline; }
+
+  .gem-sub-widget__atc[data-state="success"] {
+    background-color: var(--gem-lime);
     color: var(--gem-espresso);
   }
+  .gem-sub-widget__atc[data-state="success"] .gem-sub-widget__atc-default { display: none; }
+  .gem-sub-widget__atc[data-state="success"] .gem-sub-widget__atc-success { display: inline; }
 
-  .gem-sub-widget__sub-price {
-    font-weight: 700;
-  }
-
-  .gem-sub-widget__vs {
-    opacity: 0.7;
-    margin: 0 2px;
-  }
-
-  .gem-sub-widget__list-price {
-    opacity: 0.55;
-  }
-
-  .gem-sub-widget__onetime-price {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--gem-espresso);
+  .gem-sub-widget__error {
+    color: var(--gem-error);
+    font-size: 11px;
+    line-height: 1.3;
+    margin-top: 2px;
   }
 
   @media (max-width: 540px) {
-    .gem-sub-widget {
-      padding: 8px;
-      gap: 6px;
-    }
+    .gem-sub-widget { padding: 8px; gap: 6px; }
     .gem-sub-widget__toggle-btn { font-size: 11px; padding: 6px; }
     .gem-sub-widget__freq-btn { font-size: 10px; padding: 7px 4px; }
     .gem-sub-widget__save-pct { font-size: 10px; padding: 2px 6px; }
     .gem-sub-widget__price-compare,
     .gem-sub-widget__onetime-price { font-size: 11px; }
+    .gem-sub-widget__qty-btn { width: 26px; }
+    .gem-sub-widget__qty-input { width: 30px; font-size: 12px; }
+    .gem-sub-widget__atc { font-size: 12px; }
   }
 {% endstylesheet %}
 
@@ -262,16 +419,53 @@
     if (window.__gemSubWidgetInit) return;
     window.__gemSubWidgetInit = true;
 
+    var CART_ADD_URL = (window.Theme && Theme.routes && Theme.routes.cart_add_url) || '/cart/add.js';
+
+    function dispatchCartUpdate(cartData, sectionData, sourceId) {
+      var event = new CustomEvent('cart:update', {
+        bubbles: true,
+        cancelable: false
+      });
+      event.detail = {
+        resource: cartData,
+        sourceId: sourceId,
+        data: {
+          source: 'gem-subscription-widget',
+          sections: sectionData || {}
+        }
+      };
+      document.dispatchEvent(event);
+    }
+
+    function getCartSectionIds() {
+      var ids = [];
+      document.querySelectorAll('cart-items-component[data-section-id]').forEach(function (el) {
+        var id = el.getAttribute('data-section-id');
+        if (id && ids.indexOf(id) === -1) ids.push(id);
+      });
+      return ids;
+    }
+
     function initWidget(root) {
       if (root.dataset.gemReady === '1') return;
       root.dataset.gemReady = '1';
 
       var toggleBtns = root.querySelectorAll('[data-purchase-type]');
       var freqGroup = root.querySelector('[data-frequency-group]');
-      var pricing = root.querySelector('[data-pricing]');
       var freqBtns = root.querySelectorAll('[data-frequency]');
+      var pricing = root.querySelector('[data-pricing]');
+      var qtyInput = root.querySelector('[data-qty-input]');
+      var qtyButtons = root.querySelectorAll('[data-qty-step]');
+      var atcBtn = root.querySelector('[data-add-to-cart]');
+      var errorEl = root.querySelector('[data-error]');
+
+      var state = {
+        purchaseType: 'subscription',
+        frequency: '4w'
+      };
 
       function setMode(mode) {
+        state.purchaseType = mode;
         toggleBtns.forEach(function (btn) {
           var active = btn.dataset.purchaseType === mode;
           btn.classList.toggle('is-active', active);
@@ -286,24 +480,122 @@
         }
       }
 
+      function setFrequency(freq) {
+        state.frequency = freq;
+        freqBtns.forEach(function (btn) {
+          var active = btn.dataset.frequency === freq;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      function clampQty(n) {
+        n = parseInt(n, 10);
+        if (isNaN(n) || n < 1) n = 1;
+        if (n > 99) n = 99;
+        return n;
+      }
+
+      function getQty() { return clampQty(qtyInput.value); }
+
+      function getSellingPlanId() {
+        if (state.purchaseType !== 'subscription') return '';
+        if (state.frequency === '12w') return root.dataset.plan12w || '';
+        return root.dataset.plan4w || '';
+      }
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.hidden = false;
+      }
+      function clearError() {
+        errorEl.textContent = '';
+        errorEl.hidden = true;
+      }
+
+      function setAtcState(s) {
+        if (s) atcBtn.dataset.state = s;
+        else atcBtn.removeAttribute('data-state');
+      }
+
+      function buildFormData() {
+        var fd = new FormData();
+        fd.append('id', root.dataset.variantId || '');
+        fd.append('quantity', String(getQty()));
+        var planId = getSellingPlanId();
+        if (planId) fd.append('selling_plan', planId);
+        var sectionIds = getCartSectionIds();
+        if (sectionIds.length) fd.append('sections', sectionIds.join(','));
+        fd.append('sections_url', window.location.pathname);
+        return fd;
+      }
+
+      function addToCart() {
+        clearError();
+        atcBtn.disabled = true;
+        setAtcState('loading');
+
+        fetch(CART_ADD_URL, {
+          method: 'POST',
+          headers: { 'Accept': 'application/javascript', 'X-Requested-With': 'XMLHttpRequest' },
+          body: buildFormData()
+        })
+          .then(function (res) {
+            return res.json().then(function (body) { return { ok: res.ok, status: res.status, body: body }; });
+          })
+          .then(function (resp) {
+            if (!resp.ok) {
+              var msg = (resp.body && (resp.body.description || resp.body.message)) || 'Unable to add to cart.';
+              throw new Error(msg);
+            }
+            return fetch('/cart.js', { headers: { 'Accept': 'application/json' } })
+              .then(function (r) { return r.json(); })
+              .then(function (cart) {
+                dispatchCartUpdate(cart, resp.body.sections || {}, root.id);
+                setAtcState('success');
+                setTimeout(function () {
+                  setAtcState(null);
+                  atcBtn.disabled = false;
+                }, 1500);
+              });
+          })
+          .catch(function (err) {
+            console.error('[gem-sub-widget] add to cart failed:', err);
+            showError(err.message || 'Unable to add to cart.');
+            setAtcState(null);
+            atcBtn.disabled = false;
+          });
+      }
+
       toggleBtns.forEach(function (btn) {
         btn.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
+          e.preventDefault(); e.stopPropagation();
           setMode(btn.dataset.purchaseType);
         });
       });
 
       freqBtns.forEach(function (btn) {
         btn.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          freqBtns.forEach(function (b) {
-            var active = b === btn;
-            b.classList.toggle('is-active', active);
-            b.setAttribute('aria-pressed', active ? 'true' : 'false');
-          });
+          e.preventDefault(); e.stopPropagation();
+          setFrequency(btn.dataset.frequency);
         });
+      });
+
+      qtyButtons.forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var step = parseInt(btn.dataset.qtyStep, 10) || 0;
+          qtyInput.value = clampQty(getQty() + step);
+        });
+      });
+
+      qtyInput.addEventListener('click', function (e) { e.stopPropagation(); });
+      qtyInput.addEventListener('change', function () { qtyInput.value = getQty(); });
+      qtyInput.addEventListener('input', function () { /* allow free typing; clamp on change */ });
+
+      atcBtn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        addToCart();
       });
     }
 
