@@ -243,7 +243,7 @@
                   "type": "product-description",
                   "name": "t:names.product_description",
                   "settings": {
-                    "text": "<p>{{ closest.product.description }}</p>",
+                    "text": "{{ closest.product.description }}",
                     "width": "fit-content",
                     "max_width": "normal",
                     "alignment": "left",
@@ -299,6 +299,7 @@
             "review_kFmYc9": {
               "type": "review",
               "name": "t:names.product_review_stars",
+              "disabled": true,
               "settings": {
                 "stars_style": "shaded",
                 "show_number": true,
