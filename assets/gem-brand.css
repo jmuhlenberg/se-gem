@@ -1,0 +1,66 @@
+/* GEM Vitamins demo — brand overrides on top of Horizon defaults.
+   Matches dailygem.com: cream background (#FFFEF0), espresso text (#301D01),
+   lime accent (#EFFFC2). Headings use Fraunces (closest free Shopify-library
+   stand-in for GEM's GT Ultra display face); body uses Manrope (geometric
+   sans, close to GEM's Pangram). */
+
+:root {
+  --gem-cream: #FFFEF0;
+  --gem-espresso: #301D01;
+  --gem-espresso-deep: #1A0F00;
+  --gem-lime: #EFFFC2;
+  --gem-lime-deep: #DFF5A5;
+  --gem-sand: #F5EFD9;
+}
+
+/* Slightly tighter, more editorial headings — Fraunces shines here. */
+h1, h2, h3, .h1, .h2, .h3 {
+  letter-spacing: -0.02em;
+  font-feature-settings: "ss01", "ss02";
+}
+
+h1, .h1 { font-weight: 500; }
+h2, .h2 { font-weight: 500; }
+
+/* Body copy spacing — GEM uses generous line-height for readability. */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+p, .rte p {
+  line-height: 1.6;
+}
+
+/* Primary CTA: pill-style emphasis matching GEM's "Start Getting Results". */
+.button[data-style="primary"],
+.button--primary,
+button[type="submit"].button {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Product cards: soft cream surface with rounded corners. */
+.product-card {
+  transition: transform 240ms ease, box-shadow 240ms ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Subtle warm divider color so dividers read as GEM-brand rather than gray. */
+hr, .divider {
+  border-color: rgba(48, 29, 1, 0.12);
+}
+
+/* Header announcement bar gets the lime treatment if used. */
+.announcement-bar {
+  background-color: var(--gem-lime);
+  color: var(--gem-espresso);
+}
+
+/* Recharge widget placeholder slot — kept invisible until the widget mounts. */
+.recharge-widget-slot:empty {
+  display: none;
+}

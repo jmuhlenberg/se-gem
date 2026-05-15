@@ -6,6 +6,17 @@
 
 {% capture children %}
   {% content_for 'blocks', closest.product: product %}
+  {%- comment -%}
+    ============================================================
+    RECHARGE WIDGET PLACEHOLDER — drop Recharge OOTB subscription
+    widget here (collection card). The previous Recurly subscribe-
+    and-save badge/CTA has been suppressed for this demo. Recharge's
+    OOTB collection widget will mount inside the slot below
+    (typical use: "Subscribe & Save" badge or inline picker on
+    each product card).
+    ============================================================
+  {%- endcomment -%}
+  <div class="recharge-widget-slot recharge-widget-slot--card" data-recharge-collection-card data-product-id="{{ product.id }}"></div>
 {% endcapture %}
 
 {% render 'product-card', children: children, product: product %}

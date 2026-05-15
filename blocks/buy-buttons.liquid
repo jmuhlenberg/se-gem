@@ -217,6 +217,20 @@
               </div>
             </volume-pricing>
           {%- endif -%}
+          {%- comment -%}
+            ============================================================
+            RECHARGE WIDGET PLACEHOLDER — drop Recharge OOTB subscription
+            widget here (PDP). The previous Recurly subscribe-and-save
+            widget has been suppressed for this demo. Recharge's OOTB
+            widget will render its one-time vs subscription selector
+            (and frequency picker) above the Add-to-Cart button. App
+            embeds + `@app` blocks targeting this product-form will
+            auto-inject; if a custom slot is needed, mount it inside
+            the .recharge-widget-slot div below.
+            ============================================================
+          {%- endcomment -%}
+          <div class="recharge-widget-slot" data-recharge-pdp></div>
+
           {% content_for 'block',
             type: 'add-to-cart',
             id: 'add-to-cart',
