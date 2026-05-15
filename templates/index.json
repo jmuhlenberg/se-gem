@@ -441,7 +441,7 @@
               "type": "_product-list-text",
               "name": "t:names.collection_title",
               "settings": {
-                "text": "<h3>No guess work</h3>",
+                "text": "<h3>No guess work. Choose something we've curated.</h3>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "center",
