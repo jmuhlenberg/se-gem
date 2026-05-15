@@ -221,6 +221,32 @@
                     "width": "fit-content",
                     "max_width": "normal",
                     "alignment": "left",
+                    "type_preset": "h3",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "wrap": "pretty",
+                    "color": "var(--color-foreground)",
+                    "background": false,
+                    "background_color": "#00000026",
+                    "corner_radius": 0,
+                    "padding-block-start": 0,
+                    "padding-block-end": 0,
+                    "padding-inline-start": 0,
+                    "padding-inline-end": 0
+                  },
+                  "blocks": {}
+                },
+                "product_description_g7fQ76": {
+                  "type": "product-description",
+                  "name": "t:names.product_description",
+                  "settings": {
+                    "text": "<p>{{ closest.product.description }}</p>",
+                    "width": "fit-content",
+                    "max_width": "normal",
+                    "alignment": "left",
                     "type_preset": "rte",
                     "font": "var(--font-body--family)",
                     "font_size": "1rem",
@@ -242,6 +268,7 @@
                 "price_UMWtH9": {
                   "type": "price",
                   "name": "t:names.product_price",
+                  "disabled": true,
                   "settings": {
                     "show_sale_price_first": true,
                     "show_installments": true,
@@ -265,6 +292,7 @@
               },
               "block_order": [
                 "product_title_q7fxNy",
+                "product_description_g7fQ76",
                 "price_UMWtH9"
               ]
             },
@@ -284,6 +312,7 @@
             "variant_picker_daQid9": {
               "type": "variant-picker",
               "name": "t:names.product_variant_picker",
+              "disabled": true,
               "settings": {
                 "variant_style": "buttons",
                 "show_swatches": true,
@@ -298,6 +327,7 @@
             "buy_buttons_93x6h7": {
               "type": "buy-buttons",
               "name": "t:names.product_buy_buttons",
+              "disabled": true,
               "settings": {
                 "stacking": false,
                 "show_pickup_availability": true,
@@ -330,13 +360,29 @@
                 }
               },
               "block_order": []
+            },
+            "button_MdqTRW": {
+              "type": "button",
+              "name": "t:names.button",
+              "settings": {
+                "label": "Build your routine",
+                "link": "shopify://products/gem-build-a-routine",
+                "open_in_new_tab": false,
+                "style_class": "button",
+                "width": "fit-content",
+                "custom_width": 100,
+                "width_mobile": "fit-content",
+                "custom_width_mobile": 100
+              },
+              "blocks": {}
             }
           },
           "block_order": [
             "group_DXi69W",
             "review_kFmYc9",
             "variant_picker_daQid9",
-            "buy_buttons_93x6h7"
+            "buy_buttons_93x6h7",
+            "button_MdqTRW"
           ]
         }
       },
